@@ -1,25 +1,102 @@
-import { useState } from "react";
-import "./App.css";
+import { useEffect, useState } from "react";
+import { Info, FileText, Plus, Clock } from "lucide-react";
+import { useAtomValue } from "jotai";
 
-function App() {
-  const [count, setCount] = useState(0);
+import { activePageIdAtom } from "./activePageStore";
+import { SortablePageButton } from "./components/SortablePageButton";
+
+export default function App() {
+  const [page, setPage] = useState([
+    {
+      id: "1",
+      icon: <Info className="h-4 w-4" />,
+      title: "Info",
+      lastAdded: false,
+    },
+    {
+      id: "2",
+      icon: <FileText className="h-4 w-4" />,
+      title: "Details",
+      lastAdded: false,
+    },
+    {
+      id: "3",
+      icon: <FileText className="h-4 w-4" />,
+      title: "Other",
+      lastAdded: false,
+    },
+    {
+      id: "4",
+      icon: <Clock className="h-4 w-4" />,
+      title: "Ending",
+      lastAdded: false,
+    },
+  ]);
+  const currentPageId = useAtomValue(activePageIdAtom);
+  const currentPage =
+    page.find((p) => p.id === currentPageId)?.title ||
+    "Please select a form page.";
+
+  const addPage = (insertAt?: number) => {
+    const newPage = {
+      id: Date.now() + "",
+      icon: <FileText className="h-4 w-4" />,
+      title: `Page (${page.length + 1})`,
+      lastAdded: true,
+    };
+
+    let pagePayload: typeof page;
+
+    if (insertAt === 0) {
+      const [first, ...rest] = page;
+      pagePayload = [first, newPage, ...rest];
+    } else if (insertAt) {
+      pagePayload = [...page.toSpliced(insertAt + 1, 0, newPage)];
+    } else {
+      pagePayload = [...page, newPage];
+    }
+
+    setPage(() => pagePayload);
+  };
+
+  useEffect(() => {
+    setTimeout(() => {
+      document.querySelector(".shake")?.classList.remove("shake");
+      setPage((currentPages) => {
+        currentPages.forEach((page) => (page.lastAdded = false));
+        return currentPages;
+      });
+    }, 2000);
+  }, [page]);
 
   return (
-    <>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
+    <main className="min-h-screen bg-[#444444] p-4">
+      <div className="mb-4 rounded-lg bg-white p-3">
+        <div className="mb-4 grid h-50 place-content-center rounded-md bg-indigo-900 text-2xl text-white">
+          {currentPage}
+        </div>
+        <nav className="relative flex max-w-max flex-wrap items-center">
+          {page.map(({ id, icon, title, lastAdded }, index) => (
+            <SortablePageButton
+              key={id}
+              id={id}
+              index={index}
+              icon={icon}
+              title={title}
+              lastAdded={lastAdded}
+              addPage={addPage}
+            />
+          ))}
+          <button
+            onClick={() => addPage()}
+            className="z-2 ml-12 flex cursor-pointer items-center gap-2 rounded-md bg-white px-[10px] py-1 text-black shadow hover:bg-[#f9fafb]"
+          >
+            <Plus className="h-4 w-4" />
+            Add page
+          </button>
+          <div className="absolute flex h-[0.1px] w-full border-b-2 border-dashed" />
+        </nav>
       </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
+    </main>
   );
 }
-
-export default App;
