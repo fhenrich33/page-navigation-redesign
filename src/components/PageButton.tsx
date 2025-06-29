@@ -27,7 +27,9 @@ export function PageButton({
         {...props}
       >
         {children}
-        {id === activePageId && <EllipsisVertical size={20} className="text-[#9DA4B2]" />}
+        {id === activePageId && (
+          <EllipsisVertical size={20} className="text-[#9DA4B2]" />
+        )}
       </button>
     </PageContextMenu>
   );

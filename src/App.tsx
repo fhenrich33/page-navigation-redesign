@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { DragDropProvider } from "@dnd-kit/react";
+import { move } from "@dnd-kit/helpers";
 import { Info, FileText, Plus, Clock } from "lucide-react";
 import { useAtomValue } from "jotai";
 
@@ -45,18 +47,11 @@ export default function App() {
       lastAdded: true,
     };
 
-    let pagePayload: typeof page;
-
-    if (insertAt === 0) {
-      const [first, ...rest] = page;
-      pagePayload = [first, newPage, ...rest];
-    } else if (insertAt) {
-      pagePayload = [...page.toSpliced(insertAt + 1, 0, newPage)];
+    if (insertAt || insertAt === 0) {
+      setPage(() => page.toSpliced(insertAt + 1, 0, newPage));
     } else {
-      pagePayload = [...page, newPage];
+      setPage(() => [...page, newPage]);
     }
-
-    setPage(() => pagePayload);
   };
 
   useEffect(() => {
@@ -66,37 +61,43 @@ export default function App() {
         currentPages.forEach((page) => (page.lastAdded = false));
         return currentPages;
       });
-    }, 2000);
+    }, 600);
   }, [page]);
 
   return (
-    <main className="min-h-screen bg-[#444444] p-4">
-      <div className="mb-4 rounded-lg bg-white p-3">
-        <div className="mb-4 grid h-50 place-content-center rounded-md bg-indigo-900 text-2xl text-white">
-          {currentPage}
+    <DragDropProvider
+      onDragOver={(event) => {
+        setPage((currentPages) => move(currentPages, event));
+      }}
+    >
+      <main className="min-h-screen bg-[#444444] p-4">
+        <div className="mb-4 rounded-lg bg-white p-3">
+          <div className="mb-4 grid h-50 place-content-center rounded-md bg-indigo-900 text-2xl text-white">
+            {currentPage}
+          </div>
+          <nav className="relative flex max-w-max flex-wrap items-center">
+            {page.map(({ id, icon, title, lastAdded }, index) => (
+              <SortablePageButton
+                key={id}
+                id={id}
+                index={index}
+                icon={icon}
+                title={title}
+                lastAdded={lastAdded}
+                addPage={addPage}
+              />
+            ))}
+            <button
+              onClick={() => addPage()}
+              className="z-2 ml-12 flex cursor-pointer items-center gap-2 rounded-md bg-white px-[10px] py-1 text-black shadow hover:bg-[#f9fafb]"
+            >
+              <Plus className="h-4 w-4" />
+              Add page
+            </button>
+            <div className="absolute flex h-[0.1px] w-full border-b-2 border-dashed" />
+          </nav>
         </div>
-        <nav className="relative flex max-w-max flex-wrap items-center">
-          {page.map(({ id, icon, title, lastAdded }, index) => (
-            <SortablePageButton
-              key={id}
-              id={id}
-              index={index}
-              icon={icon}
-              title={title}
-              lastAdded={lastAdded}
-              addPage={addPage}
-            />
-          ))}
-          <button
-            onClick={() => addPage()}
-            className="z-2 ml-12 flex cursor-pointer items-center gap-2 rounded-md bg-white px-[10px] py-1 text-black shadow hover:bg-[#f9fafb]"
-          >
-            <Plus className="h-4 w-4" />
-            Add page
-          </button>
-          <div className="absolute flex h-[0.1px] w-full border-b-2 border-dashed" />
-        </nav>
-      </div>
-    </main>
+      </main>
+    </DragDropProvider>
   );
 }

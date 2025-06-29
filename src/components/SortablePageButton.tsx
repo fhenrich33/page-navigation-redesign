@@ -20,11 +20,7 @@ export function SortablePageButton({
   const { ref } = useSortable({ id, index });
 
   return (
-    <div
-      ref={ref}
-      tabIndex={-1}
-      className="z-1 flex items-center"
-    >
+    <div ref={ref} tabIndex={-1} className="z-1 flex items-center">
       <PageButton id={id} className={lastAdded ? "shake" : ""}>
         {icon}
         {title}
